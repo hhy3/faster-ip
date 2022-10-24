@@ -5,12 +5,13 @@
 #include <memory>
 #include <string>
 
+namespace {
+
 constexpr size_t align_size = 16;
 const size_t dim = 1024;
 int N;
 
 float *query, *data;
-static int init = [] { return 114515; }();
 
 float L2Sqr(const float* x, const float* y, const size_t d) {
   float result = 0.0;
@@ -19,6 +20,10 @@ float L2Sqr(const float* x, const float* y, const size_t d) {
   }
   return result;
 }
+
+}  // namespace
+
+namespace fast {
 
 float L2SqrAVX(const float* x, const float* y, const size_t d) {
   __m256 sum1 = _mm256_setzero_ps(), sum2 = _mm256_setzero_ps(), xx1, yy1, xx2,
@@ -45,6 +50,10 @@ float L2SqrAVX(const float* x, const float* y, const size_t d) {
   sumh = _mm_hadd_ps(sumh, sumh);
   return _mm_cvtss_f32(sumh);
 }
+
+}  // namespace fast
+
+namespace faiss {
 
 // reads 0 <= d < 4 floats as __m128
 static inline __m128 masked_read(int d, const float* x) {
@@ -115,6 +124,10 @@ float fvec_L2sqr_avx(const float* x, const float* y, size_t d) {
   return _mm_cvtss_f32(msum2);
 }
 
+}  // namespace faiss
+
+namespace hnswlib {
+
 float L2SqrSIMD16ExtAVX(const void* pVect1v, const void* pVect2v,
                         const void* qty_ptr) {
   float* pVect1 = (float*)pVect1v;
@@ -149,6 +162,8 @@ float L2SqrSIMD16ExtAVX(const void* pVect1v, const void* pVect2v,
          TmpRes[6] + TmpRes[7];
 }
 
+}  // namespace hnswlib
+
 static void Naive(benchmark::State& state) {
   // Code inside this loop is measured repeatedly
   for (int i = 0; auto _ : state) {
@@ -162,7 +177,7 @@ static void FastL2Sqr(benchmark::State& state) {
   // Code inside this loop is measured repeatedly
   for (int i = 0; auto _ : state) {
     ++i %= N;
-    float dist = L2SqrAVX(query, data + i * dim, dim);
+    float dist = fast::L2SqrAVX(query, data + i * dim, dim);
     benchmark::DoNotOptimize(dist);
   }
 }
@@ -171,7 +186,7 @@ static void FaissL2Sqr(benchmark::State& state) {
   // Code inside this loop is measured repeatedly
   for (int i = 0; auto _ : state) {
     ++i %= N;
-    float dist = fvec_L2sqr_avx(query, data + i * dim, dim);
+    float dist = faiss::fvec_L2sqr_avx(query, data + i * dim, dim);
     benchmark::DoNotOptimize(dist);
   }
 }
@@ -180,7 +195,7 @@ static void HNSWL2Sqr(benchmark::State& state) {
   // Code inside this loop is measured repeatedly
   for (int i = 0; auto _ : state) {
     ++i %= N;
-    float dist = fvec_L2sqr_avx(query, data + i * dim, dim);
+    float dist = hnswlib::L2SqrSIMD16ExtAVX(query, data + i * dim, &dim);
     benchmark::DoNotOptimize(dist);
   }
 }
@@ -197,4 +212,6 @@ int main(int argc, char** argv) {
   BENCHMARK(HNSWL2Sqr);
   ::benchmark::Initialize(&argc, argv);
   ::benchmark::RunSpecifiedBenchmarks();
+  free(query);
+  free(data);
 }
