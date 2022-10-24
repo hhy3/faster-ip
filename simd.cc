@@ -44,11 +44,11 @@ float L2SqrAVX(const float* x, const float* y, const size_t d) {
     sum2 = _mm256_add_ps(sum2, _mm256_mul_ps(t2, t2));
   }
   sum1 = _mm256_add_ps(sum1, sum2);
-  __m128 sumh = _mm256_extractf128_ps(sum1, 1);
-  sumh = _mm_add_ps(sumh, _mm256_extractf128_ps(sum1, 0));
-  sumh = _mm_hadd_ps(sumh, sumh);
-  sumh = _mm_hadd_ps(sumh, sumh);
-  return _mm_cvtss_f32(sumh);
+  __m128 sumh =
+      _mm_add_ps(_mm256_castps256_ps128(sum1), _mm256_extractf128_ps(sum1, 1));
+  __m128 tmp1 = _mm_add_ps(sumh, _mm_movehl_ps(sumh, sumh));
+  __m128 tmp2 = _mm_add_ps(tmp1, _mm_movehdup_ps(tmp1));
+  return _mm_cvtss_f32(tmp2);
 }
 
 }  // namespace fast
