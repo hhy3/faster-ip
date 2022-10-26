@@ -26,28 +26,27 @@ float L2Sqr(const float* x, const float* y, const size_t d) {
 namespace fast {
 
 float L2SqrAVX(const float* x, const float* y, const size_t d) {
-  __m256 sum1 = _mm256_setzero_ps(), sum2 = _mm256_setzero_ps(), xx1, yy1, xx2,
-         yy2, t1, t2;
+  __m256 sum1 = _mm256_setzero_ps(), sum2 = _mm256_setzero_ps();
   const float* end = x + d;
   while (x < end) {
-    xx1 = _mm256_loadu_ps(x);
+    auto xx1 = _mm256_loadu_ps(x);
     x += 8;
-    yy1 = _mm256_loadu_ps(y);
+    auto yy1 = _mm256_loadu_ps(y);
     y += 8;
-    t1 = _mm256_sub_ps(xx1, yy1);
-    xx2 = _mm256_loadu_ps(x);
-    x += 8;
-    yy2 = _mm256_loadu_ps(y);
-    y += 8;
-    t2 = _mm256_sub_ps(xx2, yy2);
+    auto t1 = _mm256_sub_ps(xx1, yy1);
     sum1 = _mm256_add_ps(sum1, _mm256_mul_ps(t1, t1));
-    sum2 = _mm256_add_ps(sum2, _mm256_mul_ps(t2, t2));
+    auto xx2 = _mm256_loadu_ps(x);
+    x += 8;
+    auto yy2 = _mm256_loadu_ps(y);
+    y += 8;
+    auto t2 = _mm256_sub_ps(xx1, yy1);
+    auto sum2 = _mm256_add_ps(sum1, _mm256_mul_ps(t1, t1));
   }
   sum1 = _mm256_add_ps(sum1, sum2);
-  __m128 sumh =
+  auto sumh =
       _mm_add_ps(_mm256_castps256_ps128(sum1), _mm256_extractf128_ps(sum1, 1));
-  __m128 tmp1 = _mm_add_ps(sumh, _mm_movehl_ps(sumh, sumh));
-  __m128 tmp2 = _mm_add_ps(tmp1, _mm_movehdup_ps(tmp1));
+  auto tmp1 = _mm_add_ps(sumh, _mm_movehl_ps(sumh, sumh));
+  auto tmp2 = _mm_add_ps(tmp1, _mm_movehdup_ps(tmp1));
   return _mm_cvtss_f32(tmp2);
 }
 
