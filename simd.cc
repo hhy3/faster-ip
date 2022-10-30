@@ -39,8 +39,8 @@ float L2SqrAVX(const float* x, const float* y, const size_t d) {
     x += 8;
     auto yy2 = _mm256_loadu_ps(y);
     y += 8;
-    auto t2 = _mm256_sub_ps(xx1, yy1);
-    auto sum2 = _mm256_add_ps(sum1, _mm256_mul_ps(t1, t1));
+    auto t2 = _mm256_sub_ps(xx2, yy2);
+    sum2 = _mm256_add_ps(sum2, _mm256_mul_ps(t2, t2));
   }
   sum1 = _mm256_add_ps(sum1, sum2);
   auto sumh =
