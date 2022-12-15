@@ -1,6 +1,6 @@
-# Faster L2 Squared Distance
+# Faster Inner Product
 
-This repo contains an implementation of L2 squared distance computation that is faster than [Faiss](https://github.com/facebookresearch/faiss) and [hnswlib](https://github.com/nmslib/hnswlib) using AVX2 instructions
+This repo contains an implementation of inner product computation between two high dimensional vectors that is faster than [Faiss](https://github.com/facebookresearch/faiss) and [hnswlib](https://github.com/nmslib/hnswlib) using AVX2 and AVX512 instructions.
 
 The main codes are in [simd.cc](https://github.com/hhy3/Faster-L2Sqr/blob/main/simd.cc) and you can experiment with [bench.ipynb](https://github.com/hhy3/Faster-L2Sqr/blob/main/bench.ipynb)
 
